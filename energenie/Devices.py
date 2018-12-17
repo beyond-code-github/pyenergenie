@@ -4,6 +4,12 @@
 # This table is mostly reverse-engineered from various websites and web catalogues.
 
 ##from lifecycle import *
+
+import time
+import copy
+import random
+import sys
+import traceback
 try:
     # Python 2
     import OnAir
@@ -62,7 +68,6 @@ PRODUCTID_MIHO033                 = 0x0D    # FSK open sensor
 ##PRODUCTID_MIHO039 2-gang socket Bundle black nickel
 ##PRODUCTID_MIHO040 2-gang socket Bundle chrome
 ##PRODUCTID_MIHO041 2-gang socket Bundle stainless steel
-##PRODUCTID_MIHO069 Wall thermostat
 
 # Default keys for OpenThings encryption and decryption
 CRYPT_PID                        = 242
@@ -94,6 +99,113 @@ SWITCH = {
     ]
 }
 
+MIHO013_IDENTIFY = {
+    "header": {
+        "mfrid":       MFRID_ENERGENIE,
+        "productid":   PRODUCTID_MIHO013,
+        "encryptPIP":  CRYPT_PID,
+        "sensorid":    0 # FILL IN
+    },
+    "recs": [
+        {
+            "wr":      True,
+            "paramid": OpenThings.PARAM_IDENTIFY,
+            "typeid":  OpenThings.Value.UINT,
+            "length":  0,
+        }
+    ]
+}
+
+MIHO013_EXERCISE = {
+    "header": {
+        "mfrid":       MFRID_ENERGENIE,
+        "productid":   PRODUCTID_MIHO013,
+        "encryptPIP":  CRYPT_PIP,
+        "sensorid":    0 # FILL IN
+    },
+    "recs": [
+        {
+            "wr":      True,
+            "paramid": OpenThings.PARAM_EXERCISE,
+            "typeid":  OpenThings.Value.UINT,
+            "length":  0
+        }
+    ]
+}
+
+MIHO013_BATTERY_LEVEL = {
+    "header": {
+        "mfrid":       MFRID_ENERGENIE,
+        "productid":   PRODUCTID_MIHO013,
+        "encryptPIP":  CRYPT_PID,
+        "sensorid":    0 # FILL IN
+    },
+    "recs": [
+        {
+            "wr":      True,
+            "paramid": OpenThings.PARAM_BATTERY_LEVEL, #OpenThings.PARAM_IDENTIFY,
+            "typeid":  OpenThings.Value.UINT,
+            "length":  0,
+        }
+    ]
+}
+
+MIHO013_DIAGNOSTICS = {
+    "header": {
+        "mfrid":       MFRID_ENERGENIE,
+        "productid":   PRODUCTID_MIHO013,
+        "encryptPIP":  CRYPT_PID,
+        "sensorid":    0 # FILL IN
+    },
+    "recs": [
+        {
+            "wr":      True,
+            "paramid": OpenThings.PARAM_DIAGNOSTICS,
+            "typeid":  OpenThings.Value.UINT,
+            "length":  0,
+        }
+    ]
+}
+
+MIHO013_SET_TEMPERATURE = {
+    "header": {
+        "mfrid":       MFRID_ENERGENIE,
+        "productid":   PRODUCTID_MIHO013,
+        "encryptPIP":  CRYPT_PID,
+        "sensorid":    0 # FILL IN
+    },
+    "recs": [
+        {
+            "wr":      True,
+            "paramid": OpenThings.PARAM_TEMPERATURE,
+            "typeid":  0x92,
+            "length":  2,
+            "value":   0 # FILL IN
+        }
+    ]
+}
+
+MIHO013_SET_VALVE_POSITION = {
+    "header": {
+        "mfrid":       MFRID_ENERGENIE,
+        "productid":   PRODUCTID_MIHO013,
+        "encryptPIP":  CRYPT_PID,
+        "sensorid":    0 # FILL IN
+    },
+    "recs": [
+        {
+            "wr":      True,
+            "paramid": OpenThings.PARAM_VALVE_POSITION,
+            "typeid":  0x01,
+            "length":  1,
+            "value":   0 # FILL IN
+        }
+    ]
+}
+
+
+
+
 JOIN_REQ = {
     "header": {
         "mfrid":       0, # FILL IN
@@ -113,7 +225,7 @@ JOIN_REQ = {
 
 JOIN_ACK = {
     "header": {
-        "mfrid":       0, # FILL IN
+        "mfrid":       MFRID_ENERGENIE, # FILL IN
         "productid":   0, # FILL IN
         "encryptPIP":  CRYPT_PIP,
         "sensorid":    0 # FILL IN
@@ -229,6 +341,7 @@ class Device():
         self.capabilities = Capabilities()
         self.updated_cb = None
         self.rxseq = 0
+        self.lastHandledMessage = 0
 
     def get_config(self):
         raise RuntimeError("There is no configuration for a base Device")
@@ -346,6 +459,7 @@ class Device():
         self.handle_message(payload)
         if self.updated_cb != None:
             self.updated_cb(self, payload)
+        self.lastHandledMessage=time.time()
 
     def handle_message(self, payload):
         """Default handling for a new message"""
@@ -462,14 +576,20 @@ class MiHomeDevice(EnergenieDevice):
 
     def join_ack(self):
         """Send a join-ack to the real device"""
-        msg = OpenThings.Message(header_mfrid=MFRID_ENERGENIE, header_productid=self.product_id, header_sensorid=self.device_id)
-        msg[OpenThings.PARAM_JOIN] = {"wr":False, "typeid":OpenThings.Value.UINT, "length":0}
-        self.send_message(msg)
-
+        print "send join ack"
+        #msg = OpenThings.Message(header_mfrid=MFRID_ENERGENIE, header_productid=self.product_id, header_sensorid=self.device_id)
+        #msg[OpenThings.PARAM_JOIN] = {"wr":False, "typeid":OpenThings.Value.UINT, "length":0}
+        #self.send_message(msg)
+        
+        payload = OpenThings.Message(JOIN_ACK)
+        payload.set(header_productid=self.product_id,
+                    header_sensorid=self.device_id)
+        self.send_message(payload)
+        
     ##def handle_message(self, payload):
     #override for any specific handling
 
-    def send_message(self, payload):
+    def send_message(self, payload, encoded=False):
         #TODO: interface with air_interface
         #is payload a pydict with header at this point, and we have to call OpenThings.encode?
         #should the encode be done here, or in the air_interface adaptor?
@@ -481,7 +601,7 @@ class MiHomeDevice(EnergenieDevice):
         if self.air_interface != None:
             #TODO: might want to send the config, either as a send parameter,
             #or by calling air_interface.configure() first?
-            self.air_interface.send(payload)
+            self.air_interface.send(payload, encoded=encoded, radio_config=self.radio_config)
         else:
             m = self.manufacturer_id
             p = self.product_id
@@ -731,7 +851,7 @@ class MIHO005(MiHomeDevice):
         return MiHomeDevice.get_join_req(MFRID_ENERGENIE, PRODUCTID_MIHO004, deviceid)
 
     def handle_message(self, payload):
-        ##print("MIHO005 new data %s %s" % (self.device_id, payload))
+        #print("MIHO005 new data %s %s" % (self.device_id, payload))
         for rec in payload["recs"]:
             paramid = rec["paramid"]
             #TODO: consider making this table driven and allowing our base class to fill our readings in for us
@@ -884,7 +1004,7 @@ class MIHO006(MiHomeDevice):
         return self.readings.current
 
     def get_apparent_power(self): # -> power:float
-        return self.reading.apparent_power
+        return self.readings.apparent_power
 
 
 
@@ -901,10 +1021,56 @@ class MIHO013(MiHomeDevice):
             pipe_temperature     = None
             setpoint_temperature = None
             valve_position       = None
+            diagnostic_flags     = None
         self.readings = Readings()
-        self.radio_config.inner_times = 10
+        self.radio_config.inner_times = 4
         self.capabilities.send = True
         self.capabilities.receive = True
+        self.send_queue = []
+        self.lastVoltageReading = None
+        self.lastDiagnosticsReading = None
+        self.voltageReadingPeriod = 3600
+        self.diagnosticsReadingPeriod = 3600
+
+    def handle_message(self, payload):
+        
+        # check if it's time to refresh readings
+        now=time.time()
+        if self.voltageReadingPeriod != None and ( self.lastVoltageReading == None or now-self.lastVoltageReading>self.voltageReadingPeriod):
+            self.queue_message(OpenThings.Message(MIHO013_BATTERY_LEVEL))
+            self.lastVoltageReading = now
+        
+        if self.diagnosticsReadingPeriod != None and ( self.lastDiagnosticsReading == None or now-self.lastDiagnosticsReading>self.diagnosticsReadingPeriod):
+            self.queue_message(OpenThings.Message(MIHO013_DIAGNOSTICS))
+            self.lastDiagnosticsReading = now
+        
+        # send a message whilst receive window is open
+        if len(self.send_queue)>0:
+        	message=self.send_queue.pop(0)
+        	self.send_message(message);
+        	#print ("MIHO013 send %s",self.device_id)
+        
+        #extract data from message
+        for rec in payload["recs"]:
+            paramid = rec["paramid"]
+            if "value" in rec:
+                value = rec["value"]
+                #print("MIHO013 new data %s %s %s" % (self.device_id, OpenThings.paramid_to_paramname(paramid), value))
+                if paramid == OpenThings.PARAM_TEMPERATURE:
+                    self.readings.ambient_temperature = value
+                if paramid == OpenThings.PARAM_VOLTAGE:
+                    self.readings.battery_voltage = value
+                if paramid == OpenThings.PARAM_DIAGNOSTICS:
+                    self.readings.diagnostic_flags = value
+        
+        
+    def queue_message(self, message):
+        message.set(
+            header_productid=self.product_id,
+            header_sensorid=self.device_id,
+            header_encryptPIP=int(random.randrange(0xFFFF))
+            )
+        self.send_queue.append(copy.copy(message))
 
     def get_battery_voltage(self): # ->voltage:float
         return self.readings.battery_voltage
@@ -912,40 +1078,34 @@ class MIHO013(MiHomeDevice):
     def get_ambient_temperature(self): # -> temperature:float
         return self.readings.ambient_temperature
 
-    def get_pipe_temperature(self): # -> temperature:float
-        return self.readings.pipe_temperature
+    def get_diagnostics(self):
+        return self.readings.diagnostic_flags
 
     def get_setpoint_temperature(self): #-> temperature:float
         return self.readings.setpoint_temperature
 
     def set_setpoint_temperature(self, temperature):
-        self.send_message("set setpoint temp") #TODO: command
-
-    def get_valve_position(self): # -> position:int?
-        pass #TODO: is this possible?
+    	self.readings.setpoint_temperature = temperature;
+        payload = OpenThings.Message(MIHO013_SET_TEMPERATURE).copyof()
+        payload.set(recs_TEMPERATURE_value=int(temperature*8))
+        self.queue_message(payload)
 
     def set_valve_position(self, position):
-        pass #TODO: command, is this possible?
-        self.send_message("set valve pos") #TODO
+		payload = OpenThings.Message(MIHO013_SET_VALVE_POSITION).copyof()
+		payload.set(recs_VALVE_POSITION_value=position)
+		self.queue_message(payload)   
 
-    #TODO: difference between 'is on and 'is requested on'
-    #TODO: difference between 'is off' and 'is requested off'
-    #TODO: switch state might be 'unknown' if not heard.
-    #TODO: switch state might be 'turning_on' or 'turning_off' if send request and not heard response yet
+    def set_identify(self):
+        self.queue_message(OpenThings.Message(MIHO013_IDENTIFY).copyof())
 
-    def turn_on(self): # command
-        pass #TODO: command i.e. valve position?
-        self.send_message("turn on") #TODO
+    def turn_on(self): 
+        self.set_valve_position(0)
 
-    def turn_off(self): # command
-        pass #TODO: command i.e. valve position?
-        self.send_message("turn off") #TODO
-
-    def is_on(self): # query last known reported state (unknown if changing?)
-        pass #TODO: i.e valve is not completely closed?
-
-    def is_off(self): # query last known reported state (unknown if changing?)
-        pass #TODO: i.e. valve is completely closed?
+    def turn_off(self): 
+        self.set_valve_position(1)
+        
+    def enable_thermostat(self): 
+        self.set_valve_position(2)
 
 
 #------------------------------------------------------------------------------
@@ -960,12 +1120,17 @@ class MIHO032(MiHomeDevice):
             battery_alarm = None
         self.readings = Readings()
         self.capabilities.send = True
+        self.callback=None
 
     def __repr__(self):
         return "MIHO032(%s)" % str(hex(self.device_id))
+        
+    def setCallback(self,callback):
+        self.callback=callback
 
     def handle_message(self, payload):
         ##print("MIHO032 new data %s %s" % (self.device_id, payload))
+        ##sys.stdout.flush()
         for rec in payload["recs"]:
             paramid = rec["paramid"]
             #TODO: consider making this table driven and allowing our base class to fill our readings in for us
@@ -976,7 +1141,12 @@ class MIHO032(MiHomeDevice):
             if "value" in rec:
                 value = rec["value"]
                 if paramid == OpenThings.PARAM_MOTION_DETECTOR:
-                    self.readings.switch_state = ((value == True) or (value != 0))
+                    state = ((value == True) or (value != 0));
+                    if self.readings.switch_state!= state:
+                       self.readings.switch_state = state
+                       #print("MIHO032 new data %s %s" % (self.device_id, payload))
+                       if self.callback!=None:
+                           self.callback(self,state)
                 elif paramid == OpenThings.PARAM_ALARM:
                     if value == 0x42: # battery alarming
                         self.readings.battery_alarm = True
@@ -1120,4 +1290,3 @@ class DeviceFactory():
 
 
 # END
-
