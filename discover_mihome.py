@@ -8,16 +8,13 @@ import energenie
 
 # You could also use the standard energenie.ask callback instead if you want
 # as that does exactly the same thing
-try: input = raw_input
-except NameError: pass
-
 def ask_fn(address, message):
     MSG = "Do you want to register to device: %s? " % str(address)
-    try:
-        if message != None:
-            print(message)
-        y = raw_input(MSG)
+    if message != None:
+        print(message)
 
+    try:
+        y = raw_input(MSG)
     except NameError:
         y = input(MSG)
 

@@ -27,9 +27,6 @@ registry   = None
 fsk_router = None
 ook_router = None
 
-try: input = raw_input
-except NameError: pass
-
 def init():
     """Start the Energenie system running"""
 
@@ -128,7 +125,11 @@ def ask(address, message):
     try:
         if message != None:
             print(message)
-        y = raw_input(MSG)
+            
+        try:
+            y = raw_input(MSG)
+        except NameError:
+            y = input(MSG)
 
     except AttributeError:
         y = input(MSG)
