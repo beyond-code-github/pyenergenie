@@ -27,6 +27,8 @@ registry   = None
 fsk_router = None
 ook_router = None
 
+try: input = raw_input
+except NameError: pass
 
 def init():
     """Start the Energenie system running"""
