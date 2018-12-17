@@ -125,7 +125,7 @@ def ask(address, message):
     try:
         if message != None:
             print(message)
-            
+
         try:
             y = raw_input(MSG)
         except NameError:
