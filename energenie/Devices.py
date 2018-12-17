@@ -1046,9 +1046,9 @@ class MIHO013(MiHomeDevice):
         
         # send a message whilst receive window is open
         if len(self.send_queue)>0:
-        	message=self.send_queue.pop(0)
-        	self.send_message(message);
-        	#print ("MIHO013 send %s",self.device_id)
+            message=self.send_queue.pop(0)
+            self.send_message(message)
+            #print ("MIHO013 send %s",self.device_id)
         
         #extract data from message
         for rec in payload["recs"]:
@@ -1085,15 +1085,15 @@ class MIHO013(MiHomeDevice):
         return self.readings.setpoint_temperature
 
     def set_setpoint_temperature(self, temperature):
-    	self.readings.setpoint_temperature = temperature;
+        self.readings.setpoint_temperature = temperature;
         payload = OpenThings.Message(MIHO013_SET_TEMPERATURE).copyof()
         payload.set(recs_TEMPERATURE_value=int(temperature*8))
         self.queue_message(payload)
 
     def set_valve_position(self, position):
-		payload = OpenThings.Message(MIHO013_SET_VALVE_POSITION).copyof()
-		payload.set(recs_VALVE_POSITION_value=position)
-		self.queue_message(payload)   
+        payload = OpenThings.Message(MIHO013_SET_VALVE_POSITION).copyof()
+        payload.set(recs_VALVE_POSITION_value=position)
+        self.queue_message(payload)
 
     def set_identify(self):
         self.queue_message(OpenThings.Message(MIHO013_IDENTIFY).copyof())
