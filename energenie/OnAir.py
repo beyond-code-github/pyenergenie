@@ -13,7 +13,6 @@
 # NOTE: This also might include intelligent power level selection based
 # on RSSI reports from different devices.
 
-from lifecycle import *
 import time
 
 try:
@@ -21,11 +20,13 @@ try:
     import OpenThings
     import TwoBit
     import radio
+    import lifecycle
 except ImportError:
     # Python 3
     from . import OpenThings
     from . import TwoBit
     from . import radio
+    from . import lifecycle
 
 
 class OpenThingsAirInterface():
