@@ -139,6 +139,7 @@ param_info = {
 	PARAM_ROTATION_SPEED  : {"n":"ROTATION_SPEED",		"u":"RPM"},
 	PARAM_SWITCH_STATE    : {"n":"SWITCH_STATE",		"u":""},
 	PARAM_TEMPERATURE     : {"n":"TEMPERATURE",			"u":"C"},
+	PARAM_TEMP_SET        : {"n":"TEMPERATURE",			"u":"C"},
 	PARAM_VOLTAGE         : {"n":"VOLTAGE",				"u":"V"},
 	PARAM_WATER_FLOW_RATE : {"n":"WATER_FLOW_RATE",		"u":"l/hr"},
 	PARAM_WATER_PRESSURE  : {"n":"WATER_PRESSURE",		"u":"Pa"},
