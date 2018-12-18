@@ -179,7 +179,6 @@ MIHO013_SET_TEMPERATURE = {
             "wr":      True,
             "paramid": OpenThings.PARAM_TEMP_SET,
             "typeid":  0x92,
-            "length":  2,
             "value":   0 # FILL IN
         }
     ]

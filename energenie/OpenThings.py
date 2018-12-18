@@ -329,7 +329,7 @@ def encode(spec, encrypt=True):
 
 		# PARAMID
 		if wr:
-			payload.append(0x80 + paramid) # WRITE
+			payload.append(0x80 | paramid) # WRITE
 		else:
 			payload.append(paramid)        # READ
 
