@@ -1049,7 +1049,7 @@ class MIHO013(MiHomeDevice):
         if len(self.send_queue)>0:
             message=self.send_queue.pop(0)
             self.send_message(message)
-            print("MIHO013 send %s",self.device_id)
+            print("MIHO013 send %s", message)
         
         #extract data from message
         for rec in payload["recs"]:
