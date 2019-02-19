@@ -233,7 +233,7 @@ class Discovery():
         router.when_unknown(self.unknown_device)
 
     def unknown_device(self, address, message):
-        print("message from unknown device:%s" % str(address))
+        print("message from unknown device:%s" % str(address), flush=True)
         # default action is to drop message
         # override this method in sub classes if you want special processing
 
