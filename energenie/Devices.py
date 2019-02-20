@@ -1054,7 +1054,7 @@ class MIHO013(MiHomeDevice):
         #extract data from message
         for rec in payload["recs"]:
             paramid = rec["paramid"]
-            if "value" in rec:
+            if "value" in rec and not rec["wr"]:
                 value = rec["value"]
                 #print("MIHO013 new data %s %s %s" % (self.device_id, OpenThings.paramid_to_paramname(paramid), value), flush=True)
                 if paramid == OpenThings.PARAM_TEMPERATURE:
